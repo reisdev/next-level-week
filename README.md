@@ -1,10 +1,6 @@
-<h1 align="center">
-    <img alt="NextLevelWeek" title="#NextLevelWeek" src=".github/logo.svg" width="250px" />
+<h1 align="center"> 
+	:construction: Next Level Week 🚀 In progress.. :construction:
 </h1>
-
-<h4 align="center"> 
-	:construction: NextLevelWeek 1.0 🚀 In progress.. :construction:
-</h4>
 <p align="center">
   <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/reisdev/next-level-week?color=%2304D361">
 
@@ -45,10 +41,7 @@ An online and completely free event that will help you take the next step in you
 Ecoleta is a project developed based on international environment week. 
 That aims to connect people to companies that collect specific waste such as light bulbs, batteries, cooking oil, etc.
 
-<h1 align="center">
-    <img alt="Example" title="Example" src=".github/capa.svg" width="500px" />
-</h1>
-
+<h2> Example </h2>
 
 ## :rocket: Technologies
 
