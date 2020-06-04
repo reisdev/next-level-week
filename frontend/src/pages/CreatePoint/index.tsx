@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, useCallback, ChangeEvent, FormEvent, useMemo } from 'react';
 
 import logo from "../../assets/logo.svg"
 import "./style.css"
@@ -20,7 +20,7 @@ const CreatePoint = () => {
     const history = useHistory();
     const [items, setItems] = useState<Item[]>([]);
     const [selectedUF, setSelectedUF] = useState("0");
-    const [selectedCity, setSelectedCity] = useState(null);
+    const [selectedCity, setSelectedCity] = useState("0");
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [ufs, setUFs] = useState<string[]>([]);
     const [cities, setCities] = useState<string[]>([]);
@@ -80,6 +80,14 @@ const CreatePoint = () => {
         const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedUF}/municipios`)
         setCities((await res.json()).map((city: any) => city.nome));
     }, [selectedUF]);
+
+
+    const isFormValid = useMemo(() => {
+        if (!selectedUF || !selectedCity ||
+            Object.values(formData).every(field => !field)
+            || selectedItems.length === 0) return false;
+        return true
+    }, [selectedItems, selectedUF, selectedCity, formData]);
 
     useEffect(() => {
         getItems();
@@ -159,6 +167,7 @@ const CreatePoint = () => {
                     <div className="field">
                         <label htmlFor="uf"></label>
                         <select
+                            required
                             name="uf"
                             id="uf"
                             onChange={(e) => setSelectedUF(e.target.value)}
@@ -171,10 +180,16 @@ const CreatePoint = () => {
                     </div>
                     <div className="field">
                         <label htmlFor="city"></label>
-                        <select name="city" id="city">
+                        <select
+                            required
+                            name="city"
+                            id="city"
+                            onChange={(e) => setSelectedCity(e.target.value)}
+                        >
                             <option value={0}>Escolha uma cidade</option>
                             {cities.map((city) =>
-                                <option key={city} value={city}>{city}</option>)}
+                                <option key={city} value={city}>{city}</option>
+                            )}
                         </select>
                     </div>
                 </div>
@@ -198,7 +213,7 @@ const CreatePoint = () => {
                     )}
                 </ul>
             </fieldset>
-            <button type="submit">
+            <button type="submit" disabled={!isFormValid}>
                 Cadastrar ponto de coleta
             </button>
         </form>

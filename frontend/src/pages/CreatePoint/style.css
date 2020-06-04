@@ -117,11 +117,11 @@
   cursor: not-allowed;
 }
 
-#page-create-point form .field-group .field + .field {
+#page-create-point form .field-group .field+.field {
   margin-left: 24px;
 }
 
-#page-create-point form .field-group input + input {
+#page-create-point form .field-group input+input {
   margin-left: 24px;
 }
 
@@ -162,6 +162,13 @@
 
 #page-create-point form button:hover {
   background: #2FB86E;
+}
+
+#page-create-point form button:disabled {
+  border: solid 1px rgb(65, 155, 107);
+  background-color: transparent;
+  color: rgb(65, 155, 107);
+  cursor: not-allowed;
 }
 
 .items-grid {
