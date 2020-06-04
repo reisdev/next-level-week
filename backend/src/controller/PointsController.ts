@@ -1,25 +1,24 @@
 import knex from "../database";
 import { Controller } from ".";
 import { Request, Response } from 'express';
+import { Raw, QueryBuilder } from "knex";
 
 class PointsControlller implements Controller {
     async index(req: Request, res: Response) {
         const { uf, city, items } = req.query;
 
-        if (uf && !city) return res.status(400).send({ message: "Missing Paramater 'city'" })
-        if (uf && !items) return res.status(400).send({ message: "Missing Paramater 'uf" })
         let points = [];
 
-        if (uf && city && items) {
-            const parsedItems = items ? String(items).split(",").map(item => Number(item.trim())) : [];
-            points = await knex("points")
-                .join("point_items", "points.id", "=", "point_items.point_id")
-                .whereIn("point_items.item_id", parsedItems)
-                .where("city", String(city))
-                .where("uf", String(uf))
-                .distinct()
-                .select("points.*");
-        } else points = await knex("points").select("*");
+        const parsedItems = items ? String(items).split(",").map(item => Number(item.trim())) : [];
+        points = await knex("points")
+            .join("point_items", "points.id", "=", "point_items.point_id")
+            .modify((qb: QueryBuilder) => {
+                if (city) qb.where("city", String(city))
+                if (uf) qb.where("uf", String(uf))
+                if (parsedItems.length > 0) qb.whereIn("point_items.item_id", parsedItems)
+            })
+            .distinct()
+            .select("points.*");
         return res.json(points);
     }
     async show(req: Request, res: Response) {
