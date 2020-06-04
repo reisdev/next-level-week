@@ -6,9 +6,7 @@ import { Raw, QueryBuilder } from "knex";
 class PointsControlller implements Controller {
     async index(req: Request, res: Response) {
         const { uf, city, items } = req.query;
-
         let points = [];
-
         const parsedItems = items ? String(items).split(",").map(item => Number(item.trim())) : [];
         points = await knex("points")
             .join("point_items", "points.id", "=", "point_items.point_id")
@@ -23,15 +21,15 @@ class PointsControlller implements Controller {
     }
     async show(req: Request, res: Response) {
         const { id } = req.params;
-
-        const point = await knex("points").where("id", id).first();
-
+        const point = await knex("points").where("id", id).select("*").first();
         if (!point) return res.status(404).json({ message: "Point not found" })
 
         const items = await knex("items")
-            .join("point_items", "items.id", "=", "point_items.id")
-            .where("point_items.point_id", id)
+            .join("point_items", "point_items.item_id", "=", "items.id")
+            .where("point_items.point_id", "=", id)
             .select("items.title");
+
+
         return res.json(Object.assign(point, { items }));
     }
     async create(req: Request, res: Response) {
@@ -60,7 +58,6 @@ class PointsControlller implements Controller {
         })
 
         const pointItems: PointItems[] = items.map((item_id: number) => ({ item_id, point_id: id }))
-
         await trx("point_items").insert(pointItems);
         await trx.commit();
 
