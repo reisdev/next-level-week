@@ -3,9 +3,6 @@ import { Controller } from ".";
 import { Request, Response } from 'express';
 
 class ItemsControlller implements Controller {
-    async create(res: Request, req: Response) {
-
-    }
     async index(req: Request, res: Response) {
         const items = await knex("items").select("*");
 

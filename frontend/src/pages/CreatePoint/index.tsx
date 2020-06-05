@@ -5,6 +5,8 @@ import "./style.css"
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from "react-icons/fi"
 import MapComponent from '../../components/Map';
+import Dropzone from '../../components/Dropzone';
+import Success from '../../components/Success';
 
 interface Item {
     id: number
@@ -18,10 +20,12 @@ interface UF {
 
 const CreatePoint = () => {
     const history = useHistory();
+    const [status, setStatus] = useState('');
     const [items, setItems] = useState<Item[]>([]);
     const [selectedUF, setSelectedUF] = useState("0");
     const [selectedCity, setSelectedCity] = useState("0");
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectedFile, setSelectedFile] = useState<File>();
     const [ufs, setUFs] = useState<string[]>([]);
     const [cities, setCities] = useState<string[]>([]);
     const [formData, setFormData] = useState({
@@ -40,28 +44,33 @@ const CreatePoint = () => {
 
         const res2 = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome`);
         setUFs((await res2.json()).map((uf: any) => uf.sigla));
+        alert()
     }
 
     const createPoint = async (e: FormEvent) => {
         e.preventDefault()
-        const payload = {
-            ...formData,
-            ...position,
-            uf: selectedUF,
-            city: selectedCity,
-            items: selectedItems
-        };
+        const payload = new FormData();
+
+        payload.append("name", formData.name);
+        payload.append("email", formData.email);
+        payload.append("whatsapp", formData.whatsapp);
+        payload.append("city", selectedCity);
+        payload.append("uf", selectedUF);
+        payload.append("items", selectedItems.join(","));
+        payload.append("latitude", position.latitude.toString());
+        payload.append("longitude", position.longitude.toString());
+        if (selectedFile) payload.append("image", selectedFile)
 
         const res = await fetch(`${process.env.REACT_APP_API_URL}/points`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
+            body: payload
         });
+        if (await res.status !== 200) setStatus("failure")
+        else setStatus("success")
         history.push("/");
     }
 
+    const handleImage = (file: File) => setSelectedFile(file)
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -81,7 +90,6 @@ const CreatePoint = () => {
         setCities((await res.json()).map((city: any) => city.nome));
     }, [selectedUF]);
 
-
     const isFormValid = useMemo(() => {
         if (!selectedUF || !selectedCity ||
             Object.values(formData).every(field => !field)
@@ -90,7 +98,6 @@ const CreatePoint = () => {
     }, [selectedItems, selectedUF, selectedCity, formData]);
 
     useEffect(() => {
-        getItems();
         if (selectedUF !== '0') getCities();
         navigator.geolocation.getCurrentPosition((p) => {
             setPosition({
@@ -100,7 +107,12 @@ const CreatePoint = () => {
         })
     }, [selectedUF])
 
+    useEffect(() => {
+        getItems();
+    }, [])
+
     return <section id="page-create-point">
+        <Success status={status} onClose={() => setStatus("")} />
         <header>
             <img src={logo} alt="Ecoleta" />
             <Link to="/">
@@ -110,6 +122,7 @@ const CreatePoint = () => {
         </header>
         <form onSubmit={createPoint}>
             <h1>Cadastro do<br /> ponto de coleta</h1>
+            <Dropzone onFileUploaded={handleImage} />
             <fieldset>
                 <legend>
                     <h2> Dados </h2>

@@ -1,7 +1,7 @@
 import knex from "../database";
 import { Controller } from ".";
 import { Request, Response } from 'express';
-import { Raw, QueryBuilder } from "knex";
+import { QueryBuilder } from "knex";
 
 class PointsControlller implements Controller {
     async index(req: Request, res: Response) {
@@ -11,18 +11,33 @@ class PointsControlller implements Controller {
         points = await knex("points")
             .join("point_items", "points.id", "=", "point_items.point_id")
             .modify((qb: QueryBuilder) => {
-                if (city) qb.where("city", String(city))
-                if (uf) qb.where("uf", String(uf))
-                if (parsedItems.length > 0) qb.whereIn("point_items.item_id", parsedItems)
+                if (city)
+                    qb.where("city", String(city))
+                if (uf)
+                    qb.where("uf", String(uf))
+                if (parsedItems.length > 0)
+                    qb.whereIn("point_items.item_id", parsedItems)
             })
             .distinct()
             .select("points.*");
-        return res.json(points);
+
+        const seriazedPoints = points.map(
+            (point: Point) =>
+                ({
+                    ...point, image: point.image.startsWith("http")
+                        ? point.image : `${process.env.BASE_URL}:${
+                        process.env.PORT}/uploads/${point.image}`
+                })
+        )
+
+        return res.json(seriazedPoints);
     }
     async show(req: Request, res: Response) {
         const { id } = req.params;
-        const point = await knex("points").where("id", id).select("*").first();
-        if (!point) return res.status(404).json({ message: "Point not found" })
+        const point = await knex("points")
+            .where("id", id).select("*").first();
+        if (!point) return res.status(404)
+            .json({ message: "Point not found" })
 
         const items = await knex("items")
             .join("point_items", "point_items.item_id", "=", "items.id")
@@ -30,12 +45,16 @@ class PointsControlller implements Controller {
             .select("items.title");
 
 
-        return res.json(Object.assign(point, { items }));
+        return res.json(Object.assign({
+            ...point,
+            image: `${process.env.BASE_URL}:${
+                process.env.PORT}/uploads/${point.image}`
+        }, { items }));
     }
     async create(req: Request, res: Response) {
         const {
             name,
-            image = 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',
+            image,
             email,
             whatsapp,
             city,
@@ -45,19 +64,24 @@ class PointsControlller implements Controller {
             items
         } = req.body;
 
-        const trx = await knex.transaction();
-        const [id] = await trx("points").insert({
+        const point = {
             name,
-            image,
+            image: req.file.filename || 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',
             email,
             whatsapp,
             city,
             uf,
             latitude,
             longitude
-        })
+        }
 
-        const pointItems: PointItems[] = items.map((item_id: number) => ({ item_id, point_id: id }))
+        const trx = await knex.transaction();
+        const [id] = await trx("points").insert(point)
+
+        const pointItems: PointItems[] = items.split(",")
+            .map((item_id: string) =>
+                ({ item_id: Number(item_id.trim()), point_id: id })
+            )
         await trx("point_items").insert(pointItems);
         await trx.commit();
 
