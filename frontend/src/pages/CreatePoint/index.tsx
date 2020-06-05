@@ -44,7 +44,6 @@ const CreatePoint = () => {
 
         const res2 = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome`);
         setUFs((await res2.json()).map((uf: any) => uf.sigla));
-        alert()
     }
 
     const createPoint = async (e: FormEvent) => {

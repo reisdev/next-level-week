@@ -63,7 +63,6 @@ export default function Points() {
 
     const getPoints = useCallback(
         async () => {
-            console.log(route.params)
             const params = route.params ? (route.params as Params) : null;
             const res = await fetch(`http://192.168.1.3:3333/points${selectedItems.length > 0 ? `?items=${selectedItems.join(",")}&` : "?"}${params ? params.city ? `city=${params.city}&` : "" : ""}${params ? params.uf ? `uf=${params.uf}` : "" : ""}`)
             setPoints(await res.json());
